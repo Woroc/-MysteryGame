@@ -1,0 +1,169 @@
+import random
+import time
+import json
+
+# Questions and Answers (with options for multiple choice)
+questions = [
+    {
+        "question": "Who was the first caliph of the Abbasid Empire?",
+        "options": ["Abu Muslim", "Harun al-Rashid", "Al-Mansur", "Abu Bakr"],
+        "answer": "Abu Muslim"
+    },
+    {
+        "question": "When did the Battle of Karbala take place?",
+        "options": ["610 AD", "680 AD", "732 AD", "1055 AD"],
+        "answer": "680 AD"
+    },
+    {
+        "question": "Who is considered the founder of the modern Iraqi state?",
+        "options": ["King Faisal I", "Saddam Hussein", "Ali al-Sistani", "Abdul Karim Qasim"],
+        "answer": "King Faisal I"
+    },
+    {
+        "question": "In what year did Iraq gain independence from Britain?",
+        "options": ["1932", "1945", "1958", "1923"],
+        "answer": "1932"
+    },
+    {
+        "question": "What is the capital of Iraq?",
+        "options": ["Baghdad", "Basra", "Mosul", "Karbala"],
+        "answer": "Baghdad"
+    },
+    {
+        "question": "Who was the leader of Iraq during the Gulf War in 1990?",
+        "options": ["Saddam Hussein", "Nouri al-Maliki", "Ayatollah Khomeini", "Muqtada al-Sadr"],
+        "answer": "Saddam Hussein"
+    },
+    {
+        "question": "What ancient civilization existed in Mesopotamia?",
+        "options": ["Sumerians", "Romans", "Persians", "Ottomans"],
+        "answer": "Sumerians"
+    },
+    {
+        "question": "Which river flows through Iraq?",
+        "options": ["Tigris", "Nile", "Euphrates", "Amazon"],
+        "answer": "Tigris"
+    },
+    {
+        "question": "Who led the Islamic Conquest of Mesopotamia in the 7th century?",
+        "options": ["Umar ibn al-Khattab", "Ali ibn Abi Talib", "Abu Bakr", "Omar Mukhtar"],
+        "answer": "Umar ibn al-Khattab"
+    },
+    {
+        "question": "What was the name of the famous city that was the center of the Abbasid caliphate?",
+        "options": ["Cairo", "Baghdad", "Damascus", "Kufa"],
+        "answer": "Baghdad"
+    },
+    # Add more questions as needed
+]
+
+# Load leaderboard from file
+def load_leaderboard():
+    try:
+        with open("leaderboard.json", "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
+
+# Save leaderboard to file
+def save_leaderboard(leaderboard):
+    with open("leaderboard.json", "w") as file:
+        json.dump(leaderboard, file)
+
+# Function to ask a multiple-choice question
+def ask_question(q_num):
+    print(f"\nQuestion {q_num + 1}: {questions[q_num]['question']}")
+    
+    # Display options
+    options = questions[q_num]['options']
+    random.shuffle(options)  # Shuffle the options
+    
+    for idx, option in enumerate(options, 1):
+        print(f"{idx}. {option}")
+    
+    # Set a timer for the question
+    start_time = time.time()
+    time_limit = 15  # seconds to answer
+    
+    user_answer = input(f"\nYou have {time_limit} seconds to answer. Your answer: ").strip()
+    
+    # Check if the time has exceeded the limit
+    elapsed_time = time.time() - start_time
+    if elapsed_time > time_limit:
+        print("Time's up! You took too long to answer.\n")
+        return 0
+    
+    # Check if the answer is correct
+    if user_answer.lower() in [str(idx).lower() for idx, option in enumerate(options, 1) if option.lower() == questions[q_num]['answer'].lower()]:
+        print("Correct! You've earned 10 points.\n")
+        return 10
+    else:
+        print(f"Wrong! The correct answer was {questions[q_num]['answer']}.\n")
+        return 0
+
+# Function to display the intro and game start
+def start_game():
+    print("Welcome to the Mystery History Game!")
+    print("Test your knowledge of Iraq's history and more!\n")
+    time.sleep(2)
+    print("Let's begin!\n")
+    time.sleep(1)
+
+# Main game logic
+def play_game():
+    score = 0
+    level = 1
+    total_questions = len(questions)
+    hints_used = 0
+
+    start_game()
+
+    while level <= total_questions:
+        print(f"Level {level}")
+        print(f"Your score: {score}\n")
+        
+        print("Would you like a hint? (yes/no)")
+        hint_response = input().strip().lower()
+        if hint_response == 'yes' and hints_used < 2:
+            hints_used += 1
+            print("Here's a hint: Think about historical figures and major events!\n")
+        
+        score += ask_question(level - 1)
+        level += 1
+        
+        if level > total_questions:
+            print("You've completed all the questions!")
+            break
+
+    print(f"Game over! Your final score is {score}.\n")
+    
+    # Save score to leaderboard if it's high enough
+    leaderboard = load_leaderboard()
+    player_name = input("Enter your name to save your score: ").strip()
+    if player_name:
+        leaderboard[player_name] = leaderboard.get(player_name, 0) + score
+        save_leaderboard(leaderboard)
+
+    if score >= 40:
+        print("Great job! You're a history expert!")
+    elif score >= 20:
+        print("Nice effort, but you can do better!")
+    else:
+        print("Don't worry, keep studying history!")
+
+    show_leaderboard()
+
+# Show the leaderboard
+def show_leaderboard():
+    leaderboard = load_leaderboard()
+    print("\n--- Leaderboard ---")
+    if leaderboard:
+        sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+        for rank, (name, score) in enumerate(sorted_leaderboard, 1):
+            print(f"{rank}. {name}: {score} points")
+    else:
+        print("No scores yet.")
+
+# Run the game
+if __name__ == "__main__":
+    play_game()
